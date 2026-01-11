@@ -1,7 +1,6 @@
 """
 Tests for LMS endpoints
 """
-import pytest
 from fastapi import status
 
 
@@ -13,9 +12,9 @@ def test_create_course(client, auth_headers):
             "title": "Python 101",
             "description": "Introduction to Python",
             "instructor": "John Doe",
-            "modules": [{"name": "Basics", "lessons": []}]
+            "modules": [{"name": "Basics", "lessons": []}],
         },
-        headers=auth_headers
+        headers=auth_headers,
     )
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
@@ -29,15 +28,11 @@ def test_get_course(client, auth_headers):
     # Create course
     create_response = client.post(
         "/api/v1/lms/courses",
-        json={
-            "title": "Test Course",
-            "description": "Test Description",
-            "instructor": "Test Instructor"
-        },
-        headers=auth_headers
+        json={"title": "Test Course", "description": "Test Description", "instructor": "Test Instructor"},
+        headers=auth_headers,
     )
     course_id = create_response.json()["id"]
-    
+
     # Get it
     response = client.get(f"/api/v1/lms/courses/{course_id}", headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
@@ -51,23 +46,16 @@ def test_update_course(client, auth_headers):
     # Create course
     create_response = client.post(
         "/api/v1/lms/courses",
-        json={
-            "title": "Original Title",
-            "description": "Original Description",
-            "instructor": "Original Instructor"
-        },
-        headers=auth_headers
+        json={"title": "Original Title", "description": "Original Description", "instructor": "Original Instructor"},
+        headers=auth_headers,
     )
     course_id = create_response.json()["id"]
-    
+
     # Update it
     response = client.put(
         f"/api/v1/lms/courses/{course_id}",
-        json={
-            "title": "Updated Title",
-            "description": "Updated Description"
-        },
-        headers=auth_headers
+        json={"title": "Updated Title", "description": "Updated Description"},
+        headers=auth_headers,
     )
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -80,19 +68,15 @@ def test_delete_course(client, auth_headers):
     # Create course
     create_response = client.post(
         "/api/v1/lms/courses",
-        json={
-            "title": "To Delete",
-            "description": "Will be deleted",
-            "instructor": "Instructor"
-        },
-        headers=auth_headers
+        json={"title": "To Delete", "description": "Will be deleted", "instructor": "Instructor"},
+        headers=auth_headers,
     )
     course_id = create_response.json()["id"]
-    
+
     # Delete it
     response = client.delete(f"/api/v1/lms/courses/{course_id}", headers=auth_headers)
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    
+
     # Verify it's deleted
     get_response = client.get(f"/api/v1/lms/courses/{course_id}", headers=auth_headers)
     assert get_response.status_code == status.HTTP_404_NOT_FOUND
@@ -104,14 +88,10 @@ def test_list_courses(client, auth_headers):
     for i in range(3):
         client.post(
             "/api/v1/lms/courses",
-            json={
-                "title": f"Course {i}",
-                "description": f"Description {i}",
-                "instructor": f"Instructor {i}"
-            },
-            headers=auth_headers
+            json={"title": f"Course {i}", "description": f"Description {i}", "instructor": f"Instructor {i}"},
+            headers=auth_headers,
         )
-    
+
     # List them
     response = client.get("/api/v1/lms/courses", headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
@@ -124,23 +104,14 @@ def test_enroll_user(client, auth_headers, test_user):
     # Create course
     create_response = client.post(
         "/api/v1/lms/courses",
-        json={
-            "title": "Enrollment Test",
-            "description": "Test Description",
-            "instructor": "Instructor"
-        },
-        headers=auth_headers
+        json={"title": "Enrollment Test", "description": "Test Description", "instructor": "Instructor"},
+        headers=auth_headers,
     )
     course_id = create_response.json()["id"]
-    
+
     # Enroll user
     response = client.post(
-        "/api/v1/lms/enrollments",
-        json={
-            "user_id": str(test_user.id),
-            "course_id": course_id
-        },
-        headers=auth_headers
+        "/api/v1/lms/enrollments", json={"user_id": str(test_user.id), "course_id": course_id}, headers=auth_headers
     )
     assert response.status_code == status.HTTP_201_CREATED
 
@@ -150,25 +121,16 @@ def test_get_my_courses(client, auth_headers, test_user):
     # Create and enroll in a course
     create_response = client.post(
         "/api/v1/lms/courses",
-        json={
-            "title": "My Course",
-            "description": "My Description",
-            "instructor": "Instructor"
-        },
-        headers=auth_headers
+        json={"title": "My Course", "description": "My Description", "instructor": "Instructor"},
+        headers=auth_headers,
     )
     course_id = create_response.json()["id"]
-    
+
     # Enroll
     client.post(
-        "/api/v1/lms/enrollments",
-        json={
-            "user_id": str(test_user.id),
-            "course_id": course_id
-        },
-        headers=auth_headers
+        "/api/v1/lms/enrollments", json={"user_id": str(test_user.id), "course_id": course_id}, headers=auth_headers
     )
-    
+
     # Get my courses
     response = client.get("/api/v1/lms/my-courses", headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
@@ -181,4 +143,3 @@ def test_lms_requires_authentication(client):
     """Test that LMS endpoints require authentication"""
     response = client.get("/api/v1/lms/courses")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-

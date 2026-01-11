@@ -29,3 +29,15 @@ clean:
 	rm -rf htmlcov
 	rm -rf .coverage
 
+
+lint:
+	ruff check .
+	pylint app
+
+format:
+	ruff format .
+
+typecheck:
+	mypy app
+
+check: lint typecheck test

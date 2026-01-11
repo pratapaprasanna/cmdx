@@ -1,0 +1,29 @@
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "I"]
+ignore = []
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.pylint.messages_control]
+disable = [
+    "C0114", # missing-module-docstring (we enforce this via ruff/others usually but good to keep optional)
+    "C0115", # missing-class-docstring
+    "C0116", # missing-function-docstring
+    "R0903", # too-few-public-methods (common for DTOs)
+    "R0913", # too-many-arguments
+    "E0401", # import-error (pylint sometimes struggles with imports that python handles fine)
+]
+max-line-length = 120
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true

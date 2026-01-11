@@ -120,8 +120,24 @@ The API will be available at:
 ### Authentication (`/api/v1/auth`)
 
 - `POST /register` - Register a new user
+  ```bash
+  curl -X POST "http://localhost:8000/api/v1/auth/register" \
+    -H "Content-Type: application/json" \
+    -d '{"email": "test@example.com", "password": "securepassword"}'
+  ```
+
 - `POST /login` - Login and get access token
+  ```bash
+  curl -X POST "http://localhost:8000/api/v1/auth/login" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "username=test@example.com&password=securepassword"
+  ```
+
 - `GET /me` - Get current user information
+  ```bash
+  curl -X GET "http://localhost:8000/api/v1/auth/me" \
+    -H "Authorization: Bearer <your_access_token>"
+  ```
 
 ### CMS (`/api/v1/cms`)
 
