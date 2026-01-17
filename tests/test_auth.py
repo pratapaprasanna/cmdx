@@ -2,6 +2,7 @@
 Tests for authentication endpoints
 """
 import time
+
 from fastapi import status
 
 
@@ -20,9 +21,7 @@ def test_register_user(client):
 
 def test_register_duplicate_email(client, test_user):
     """Test registration with duplicate email"""
-    response = client.post(
-        "/api/v1/users", json={"email": "test@example.com", "password": "SecurePassword1!"}
-    )
+    response = client.post("/api/v1/users", json={"email": "test@example.com", "password": "SecurePassword1!"})
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
@@ -48,7 +47,6 @@ def test_get_current_user(client, auth_headers):
     data = response.json()
     assert data["username"] == "testuser"
     assert data["email"] == "test@example.com"
-
 
     response = client.get("/api/v1/users/me")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -89,25 +87,19 @@ def test_refresh_token(client, test_user):
     # Login to get initial token
     login_response = client.post("/api/v1/tokens", data={"username": "testuser", "password": "testpassword"})
     initial_token = login_response.json()["access_token"]
-    
+
     # Wait for 1 second to ensure token expiration changes
     time.sleep(1)
 
     # Refresh token
-    response = client.post(
-        "/api/v1/token-renewals",
-        headers={"Authorization": f"Bearer {initial_token}"}
-    )
+    response = client.post("/api/v1/token-renewals", headers={"Authorization": f"Bearer {initial_token}"})
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert "access_token" in data
     new_token = data["access_token"]
     assert new_token != initial_token
-    
+
     # Verify new token works
-    me_response = client.get(
-        "/api/v1/users/me",
-        headers={"Authorization": f"Bearer {new_token}"}
-    )
+    me_response = client.get("/api/v1/users/me", headers={"Authorization": f"Bearer {new_token}"})
     assert me_response.status_code == status.HTTP_200_OK
     assert me_response.json()["username"] == "testuser"

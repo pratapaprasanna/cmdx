@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import create_access_token, decode_access_token
 from app.db.base import get_db
-from app.schemas.auth import Token, UserCreate, UserResponse, RoleCreate, RoleResponse, RolesResponse
+from app.schemas.auth import RoleCreate, RoleResponse, RolesResponse, Token, UserCreate, UserResponse
 from app.services.auth.auth_service import AuthService
 
 router = APIRouter()
@@ -26,7 +26,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    username: str = payload.get("sub")
+    username: str = payload.get("sub")  # type: ignore[assignment]
     if username is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -90,8 +90,15 @@ async def get_user_roles(user_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     # All roles belong to the same user, so we can use the first role's user_id
     return RolesResponse(
-        user_id=roles[0].user_id,
-        roles=[RoleResponse(id=role.id, user_id=role.user_id, role=role.role) for role in roles]
+        user_id=roles[0].user_id,  # type: ignore[arg-type]
+        roles=[
+            RoleResponse(
+                id=role.id,  # type: ignore[arg-type]
+                user_id=role.user_id,  # type: ignore[arg-type]
+                role=role.role,  # type: ignore[arg-type]
+            )
+            for role in roles
+        ],
     )
 
 

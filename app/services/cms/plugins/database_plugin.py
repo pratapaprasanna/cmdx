@@ -104,7 +104,7 @@ class DatabasePlugin(BasePlugin):
         if "body" in content_data:
             content.body = content_data["body"]
         if "metadata" in content_data:
-            content.meta_data = {**(content.meta_data or {}), **content_data["metadata"]}
+            content.meta_data = {**(content.meta_data or {}), **content_data["metadata"]}  # type: ignore[assignment]
 
         db.commit()
         db.refresh(content)

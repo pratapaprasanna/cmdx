@@ -20,7 +20,7 @@ async def get_current_user_id(current_user: str = Depends(get_current_user), db:
     user = db.query(User).filter(User.username == current_user).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return user.id
+    return user.id  # type: ignore[return-value]
 
 
 @router.post("/courses", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)

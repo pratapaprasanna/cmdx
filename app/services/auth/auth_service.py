@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash, verify_password
 from app.db.base import SessionLocal
-from app.db.models import User, Role, RoleType
+from app.db.models import Role, RoleType, User
 from app.schemas.auth import UserResponse
 
 
@@ -47,11 +47,11 @@ class AuthService:
         self.db.commit()
 
         return UserResponse(
-            id=db_user.id,
-            username=db_user.username,
-            email=db_user.email,
-            is_active=db_user.is_active,
-            created_at=db_user.created_at,
+            id=db_user.id,  # type: ignore[arg-type]
+            username=db_user.username,  # type: ignore[arg-type]
+            email=db_user.email,  # type: ignore[arg-type]
+            is_active=db_user.is_active,  # type: ignore[arg-type]
+            created_at=db_user.created_at,  # type: ignore[arg-type]
         )
 
     async def authenticate_user(self, username: str, password: str) -> Optional[UserResponse]:
@@ -61,14 +61,18 @@ class AuthService:
         if not user:
             return None
 
-        if not verify_password(password, user.hashed_password):
+        if not verify_password(password, user.hashed_password):  # type: ignore[arg-type]
             return None
 
         if not user.is_active:
             return None
 
         return UserResponse(
-            id=user.id, username=user.username, email=user.email, is_active=user.is_active, created_at=user.created_at
+            id=user.id,  # type: ignore[arg-type]
+            username=user.username,  # type: ignore[arg-type]
+            email=user.email,  # type: ignore[arg-type]
+            is_active=user.is_active,  # type: ignore[arg-type]
+            created_at=user.created_at,  # type: ignore[arg-type]
         )
 
     async def get_user_by_username(self, username: str) -> Optional[UserResponse]:
@@ -78,7 +82,11 @@ class AuthService:
             return None
 
         return UserResponse(
-            id=user.id, username=user.username, email=user.email, is_active=user.is_active, created_at=user.created_at
+            id=user.id,  # type: ignore[arg-type]
+            username=user.username,  # type: ignore[arg-type]
+            email=user.email,  # type: ignore[arg-type]
+            is_active=user.is_active,  # type: ignore[arg-type]
+            created_at=user.created_at,  # type: ignore[arg-type]
         )
 
     async def add_role_to_user(self, user_id: str, role: RoleType) -> Optional[Role]:
@@ -94,7 +102,7 @@ class AuthService:
             return None
 
         # check if role already exists
-        existing_role = self.db.query(Role).filter(Role.user_id == user.id, Role.role == role).first()
+        existing_role = self.db.query(Role).filter(Role.user_id == user.id, Role.role == role).first()  # type: ignore[arg-type]
         if existing_role:
             return existing_role
 

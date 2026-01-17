@@ -36,6 +36,8 @@ class PluginRegistry:
         if plugin_name is None:
             plugin_name = self._default_plugin
 
+        if plugin_name is None:
+            return None
         return self._plugins.get(plugin_name)
 
     def list_plugins(self) -> list:

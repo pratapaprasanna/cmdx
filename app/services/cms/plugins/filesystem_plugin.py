@@ -45,7 +45,7 @@ class FilesystemPlugin(BasePlugin):
 
         try:
             with open(file_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                return json.load(f)  # type: ignore[no-any-return]
         except Exception:
             return None
 
@@ -96,7 +96,7 @@ class FilesystemPlugin(BasePlugin):
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(existing, f, indent=2)
 
-            return existing
+            return existing  # type: ignore[no-any-return]
         except Exception:
             return None
 
