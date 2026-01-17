@@ -2,16 +2,15 @@
 
 ## Authentication
 
-All endpoints except `/api/v1/auth/register` and `/api/v1/auth/login` require authentication via Bearer token.
+All endpoints except `/api/v1/users` (register) and `/api/v1/tokens` (login) require authentication via Bearer token.
 
 ### Register User
 
-**POST** `/api/v1/auth/register`
+**POST** `/api/v1/users`
 
 Request body:
 ```json
 {
-  "username": "string",
   "email": "string",
   "password": "string"
 }
@@ -20,21 +19,37 @@ Request body:
 Response: `201 Created`
 ```json
 {
-  "id": 1,
+  "id": "string",
   "username": "string",
   "email": "string",
   "is_active": true,
-  "created_at": "2024-01-01T00:00:00"
+  "created_at": "2024-01-01T00:00:00Z"
 }
 ```
 
+**Note:** New users are automatically assigned the default "user" role.
+
 ### Login
 
-**POST** `/api/v1/auth/login`
+**POST** `/api/v1/tokens`
 
 Form data:
-- `username`: string
+- `username`: string (can be username or email)
 - `password`: string
+
+Response: `200 OK`
+```json
+{
+  "access_token": "string",
+  "token_type": "bearer"
+}
+```
+
+### Renew Token
+
+**POST** `/api/v1/token-renewals`
+
+Headers: `Authorization: Bearer <token>`
 
 Response: `200 OK`
 ```json
@@ -46,26 +61,76 @@ Response: `200 OK`
 
 ### Get Current User
 
-**GET** `/api/v1/auth/me`
+**GET** `/api/v1/users/me`
 
 Headers: `Authorization: Bearer <token>`
 
 Response: `200 OK`
 ```json
 {
-  "id": 1,
+  "id": "string",
   "username": "string",
   "email": "string",
   "is_active": true,
-  "created_at": "2024-01-01T00:00:00"
+  "created_at": "2024-01-01T00:00:00Z"
+}
+```
+
+### Get User Roles
+
+**GET** `/api/v1/users/{user_id}/roles`
+
+Parameters:
+- `user_id`: string (can be UUID or username)
+
+Response: `200 OK`
+```json
+{
+  "user_id": "string",
+  "roles": [
+    {
+      "id": "string",
+      "user_id": "string",
+      "role": "user"
+    }
+  ]
+}
+```
+
+**Note:** If a user has no roles, the default "user" role is automatically assigned when querying.
+
+### Add Role to User
+
+**POST** `/api/v1/users/{user_id}/roles`
+
+Parameters:
+- `user_id`: string (can be UUID or username)
+
+Request body:
+```json
+{
+  "role": "admin"
+}
+```
+
+Valid role values: `"admin"`, `"developer"`, `"user"`
+
+Response: `201 Created`
+```json
+{
+  "id": "string",
+  "user_id": "string",
+  "role": "admin"
 }
 ```
 
 ## CMS Endpoints
 
+All CMS endpoints require authentication.
+
 ### List Plugins
 
-**GET** `/api/v1/cms/plugins`
+**GET** `/api/v1/plugins`
 
 Response: `200 OK`
 ```json
@@ -74,7 +139,7 @@ Response: `200 OK`
 
 ### Create Content
 
-**POST** `/api/v1/cms/content?plugin=database`
+**POST** `/api/v1/contents?plugin=database`
 
 Query parameters:
 - `plugin` (optional): "database" or "filesystem" (default: "database")
@@ -96,15 +161,15 @@ Response: `201 Created`
   "title": "string",
   "body": "string",
   "metadata": {},
-  "created_at": "2024-01-01T00:00:00",
-  "updated_at": "2024-01-01T00:00:00",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z",
   "plugin": "database"
 }
 ```
 
 ### Get Content
 
-**GET** `/api/v1/cms/content/{content_id}?plugin=database`
+**GET** `/api/v1/contents/{content_id}?plugin=database`
 
 Response: `200 OK`
 ```json
@@ -113,15 +178,15 @@ Response: `200 OK`
   "title": "string",
   "body": "string",
   "metadata": {},
-  "created_at": "2024-01-01T00:00:00",
-  "updated_at": "2024-01-01T00:00:00",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z",
   "plugin": "database"
 }
 ```
 
 ### Update Content
 
-**PUT** `/api/v1/cms/content/{content_id}?plugin=database`
+**PUT** `/api/v1/contents/{content_id}?plugin=database`
 
 Request body:
 ```json
@@ -139,21 +204,21 @@ Response: `200 OK`
   "title": "string",
   "body": "string",
   "metadata": {},
-  "created_at": "2024-01-01T00:00:00",
-  "updated_at": "2024-01-01T00:00:00",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z",
   "plugin": "database"
 }
 ```
 
 ### Delete Content
 
-**DELETE** `/api/v1/cms/content/{content_id}?plugin=database`
+**DELETE** `/api/v1/contents/{content_id}?plugin=database`
 
 Response: `204 No Content`
 
 ### List Content
 
-**GET** `/api/v1/cms/content?plugin=database&limit=100&offset=0`
+**GET** `/api/v1/contents?plugin=database&limit=100&offset=0`
 
 Query parameters:
 - `plugin` (optional): "database" or "filesystem"
@@ -168,8 +233,8 @@ Response: `200 OK`
     "title": "string",
     "body": "string",
     "metadata": {},
-    "created_at": "2024-01-01T00:00:00",
-    "updated_at": "2024-01-01T00:00:00",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z",
     "plugin": "database"
   }
 ]
@@ -177,9 +242,11 @@ Response: `200 OK`
 
 ## LMS Endpoints
 
+All LMS endpoints require authentication.
+
 ### Create Course
 
-**POST** `/api/v1/lms/courses`
+**POST** `/api/v1/courses`
 
 Request body:
 ```json
@@ -200,14 +267,14 @@ Response: `201 Created`
   "description": "string",
   "instructor": "string",
   "modules": [],
-  "created_at": "2024-01-01T00:00:00",
-  "updated_at": "2024-01-01T00:00:00"
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
 }
 ```
 
 ### Get Course
 
-**GET** `/api/v1/lms/courses/{course_id}`
+**GET** `/api/v1/courses/{course_id}`
 
 Response: `200 OK`
 ```json
@@ -217,14 +284,14 @@ Response: `200 OK`
   "description": "string",
   "instructor": "string",
   "modules": [],
-  "created_at": "2024-01-01T00:00:00",
-  "updated_at": "2024-01-01T00:00:00"
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
 }
 ```
 
 ### Update Course
 
-**PUT** `/api/v1/lms/courses/{course_id}`
+**PUT** `/api/v1/courses/{course_id}`
 
 Request body:
 ```json
@@ -244,20 +311,20 @@ Response: `200 OK`
   "description": "string",
   "instructor": "string",
   "modules": [],
-  "created_at": "2024-01-01T00:00:00",
-  "updated_at": "2024-01-01T00:00:00"
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
 }
 ```
 
 ### Delete Course
 
-**DELETE** `/api/v1/lms/courses/{course_id}`
+**DELETE** `/api/v1/courses/{course_id}`
 
 Response: `204 No Content`
 
 ### List Courses
 
-**GET** `/api/v1/lms/courses?limit=100&offset=0`
+**GET** `/api/v1/courses?limit=100&offset=0`
 
 Query parameters:
 - `limit` (optional): Number of items to return (default: 100, max: 1000)
@@ -272,23 +339,25 @@ Response: `200 OK`
     "description": "string",
     "instructor": "string",
     "modules": [],
-    "created_at": "2024-01-01T00:00:00",
-    "updated_at": "2024-01-01T00:00:00"
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
   }
 ]
 ```
 
 ### Enroll User
 
-**POST** `/api/v1/lms/enrollments`
+**POST** `/api/v1/enrollments`
 
 Request body:
 ```json
 {
-  "user_id": "string",
+  "user_id": "string (optional)",
   "course_id": "string"
 }
 ```
+
+**Note:** If `user_id` is not provided, the current authenticated user will be enrolled.
 
 Response: `201 Created`
 ```json
@@ -299,13 +368,17 @@ Response: `201 Created`
 
 ### Unenroll User
 
-**DELETE** `/api/v1/lms/enrollments/{course_id}`
+**DELETE** `/api/v1/enrollments/{course_id}`
+
+**Note:** Unenrolls the current authenticated user from the specified course.
 
 Response: `204 No Content`
 
 ### Get My Courses
 
-**GET** `/api/v1/lms/my-courses`
+**GET** `/api/v1/my-courses`
+
+**Note:** Returns all courses the current authenticated user is enrolled in.
 
 Response: `200 OK`
 ```json
@@ -316,8 +389,8 @@ Response: `200 OK`
     "description": "string",
     "instructor": "string",
     "modules": [],
-    "created_at": "2024-01-01T00:00:00",
-    "updated_at": "2024-01-01T00:00:00"
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
   }
 ]
 ```
@@ -362,4 +435,4 @@ Following White House Web API Standards, error responses use a standardized form
 - `errorCode`: Machine-readable error code (optional)
 - `moreInfo`: URL to documentation about this error (optional)
 
-**Note:** Some endpoints may still return simple string error messages in the `detail` field for backward compatibility, but new endpoints should use the standardized format.
+**Note:** Some endpoints may still return simple string error messages in the `detail` field for backward compatibility, but new endpoints should use the standardized format defined in `app/core/exceptions.py`.

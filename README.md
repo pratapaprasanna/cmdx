@@ -121,7 +121,7 @@ The API will be available at:
 
 ### Authentication
 
-- `POST /users` - Register a new user
+- `POST /users` - Register a new user (automatically assigns "user" role)
   ```bash
   curl -X POST "http://localhost:8000/api/v1/users" \
     -H "Content-Type: application/json" \
@@ -135,11 +135,40 @@ The API will be available at:
     -d "username=test@example.com&password=securepassword"
   ```
 
+- `POST /token-renewals` - Renew access token
+  ```bash
+  curl -X POST "http://localhost:8000/api/v1/token-renewals" \
+    -H "Authorization: Bearer <your_access_token>"
+  ```
+
 - `GET /users/me` - Get current user information
   ```bash
   curl -X GET "http://localhost:8000/api/v1/users/me" \
     -H "Authorization: Bearer <your_access_token>"
   ```
+
+### User Roles
+
+- `GET /users/{user_id}/roles` - Get all roles for a user (user_id can be UUID or username)
+  ```bash
+  curl -X GET "http://localhost:8000/api/v1/users/{user_id}/roles" \
+    -H "Authorization: Bearer <your_access_token>"
+  ```
+
+- `POST /users/{user_id}/roles` - Add a role to a user
+  ```bash
+  curl -X POST "http://localhost:8000/api/v1/users/{user_id}/roles" \
+    -H "Authorization: Bearer <your_access_token>" \
+    -H "Content-Type: application/json" \
+    -d '{"role": "admin"}'
+  ```
+
+**Available Roles:**
+- `user` - Default role assigned to all new users
+- `admin` - Administrator role
+- `developer` - Developer role
+
+**Note:** If a user has no roles, the default "user" role is automatically assigned when querying roles.
 
 ### CMS
 
