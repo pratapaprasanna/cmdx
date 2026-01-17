@@ -4,6 +4,7 @@ LMS endpoints
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import List as ListType
 from sqlalchemy.orm import Session
 
 from app.api.v1.endpoints.auth import get_current_user
@@ -35,10 +36,15 @@ async def create_course(
 
 
 @router.get("/courses/{course_id}", response_model=CourseResponse)
-async def get_course(course_id: str, _current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get course by ID"""
+async def get_course(
+    course_id: str,
+    resolve_content: bool = Query(False, description="Resolve CMS content in modules"),
+    _current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get course by ID with optional content resolution"""
     lms_service = LMSService(db=db)
-    result = await lms_service.get_course(course_id)
+    result = await lms_service.get_course(course_id, resolve_content=resolve_content)
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
     return CourseResponse(**result)
@@ -107,9 +113,23 @@ async def unenroll_user(course_id: str, current_user: str = Depends(get_current_
 
 
 @router.get("/my-courses", response_model=List[CourseResponse])
-async def get_my_courses(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_my_courses(
+    resolve_content: bool = Query(False, description="Resolve CMS content in modules"),
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Get all courses the current user is enrolled in"""
     lms_service = LMSService(db=db)
     user_id = await get_current_user_id(current_user, db)
     results = await lms_service.get_user_courses(user_id)
+    
+    if resolve_content:
+        from app.services.lms.course_content_resolver import CourseContentResolver
+        resolver = CourseContentResolver()
+        resolved_results = []
+        for course in results:
+            resolved_course = await resolver.resolve_course_modules(course, include_content=True)
+            resolved_results.append(resolved_course)
+        return [CourseResponse(**item) for item in resolved_results]
+    
     return [CourseResponse(**item) for item in results]

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.base import SessionLocal
 from app.db.models import Course as CourseModel
 from app.db.models import User
+from app.services.lms.course_content_resolver import CourseContentResolver
 
 
 class LMSService:
@@ -49,13 +50,24 @@ class LMSService:
             "updated_at": db_course.updated_at.isoformat() if db_course.updated_at else None,
         }
 
-    async def get_course(self, course_id: str) -> Optional[Dict[str, Any]]:
-        """Get course by ID"""
+    async def get_course(
+        self, course_id: str, resolve_content: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get course by ID
+
+        Args:
+            course_id: Course ID
+            resolve_content: If True, resolve CMS content in modules
+
+        Returns:
+            Course data with optionally resolved content
+        """
         course = self.db.query(CourseModel).filter(CourseModel.id == course_id).first()
         if not course:
             return None
 
-        return {
+        course_data = {
             "id": course.id,
             "title": course.title,
             "description": course.description,
@@ -64,6 +76,12 @@ class LMSService:
             "created_at": course.created_at.isoformat() if course.created_at else None,
             "updated_at": course.updated_at.isoformat() if course.updated_at else None,
         }
+
+        if resolve_content:
+            resolver = CourseContentResolver()
+            course_data = await resolver.resolve_course_modules(course_data, include_content=True)
+
+        return course_data
 
     async def update_course(self, course_id: str, course_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Update existing course"""
