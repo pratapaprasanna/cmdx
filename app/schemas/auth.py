@@ -1,7 +1,6 @@
 """
 Authentication schemas
 """
-from datetime import datetime
 from typing import List
 
 from pydantic import BaseModel, EmailStr, field_validator
@@ -40,7 +39,8 @@ class UserResponse(UserBase):
     id: str
     username: str
     is_active: bool
-    created_at: datetime
+    created_at: int  # Epoch timestamp in seconds
+    updated_at: int  # Epoch timestamp in seconds
 
     class Config:
         from_attributes = True

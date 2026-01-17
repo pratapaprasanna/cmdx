@@ -1,16 +1,16 @@
 """
 Course content management endpoints
 """
-from typing import List
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.v1.endpoints.auth import get_current_user
+from app.api.v1.endpoints.auth import get_current_user, require_admin_role, require_user_role
 from app.db.base import get_db
 from app.db.models import Course as CourseModel
 from app.db.models import User
-from app.schemas.lms import CourseModule, ModuleContentItem
+from app.schemas.lms import ModuleContentItem
 from app.services.cms.cms_service import CMSService
 from app.services.lms.course_content_resolver import CourseContentResolver
 
@@ -30,10 +30,10 @@ async def add_content_to_module(
     course_id: str,
     module_id: str,
     content_item: ModuleContentItem,
-    _current_user: str = Depends(get_current_user),
+    _current_user: str = Depends(require_admin_role),
     db: Session = Depends(get_db),
 ):
-    """Add CMS content to a course module"""
+    """Add CMS content to a course module (Admin only)"""
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
@@ -51,8 +51,8 @@ async def add_content_to_module(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
     # Find or create module
-    modules = course.modules or []
-    module = None
+    modules: list[dict[str, Any]] = list(course.modules) if course.modules else []  # type: ignore[arg-type]
+    module: dict[str, Any] | None = None
     for m in modules:
         if isinstance(m, dict) and m.get("id") == module_id:
             module = m
@@ -87,7 +87,7 @@ async def add_content_to_module(
     module["content_items"].append(content_item_dict)
 
     # Update course
-    course.modules = modules
+    course.modules = modules  # type: ignore[assignment]
     db.commit()
     db.refresh(course)
 
@@ -100,15 +100,15 @@ async def remove_content_from_module(
     module_id: str,
     content_id: str,
     plugin: str = Query(..., description="Plugin name"),
-    _current_user: str = Depends(get_current_user),
+    _current_user: str = Depends(require_admin_role),
     db: Session = Depends(get_db),
 ):
-    """Remove CMS content from a course module"""
+    """Remove CMS content from a course module (Admin only)"""
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
-    modules = course.modules or []
+    modules: list[dict[str, Any]] = list(course.modules) if course.modules else []  # type: ignore[arg-type]
     for module in modules:
         if isinstance(module, dict) and module.get("id") == module_id:
             content_items = module.get("content_items", [])
@@ -128,7 +128,7 @@ async def remove_content_from_module(
                     detail="Content not found in module",
                 )
 
-            course.modules = modules
+            course.modules = modules  # type: ignore[assignment]
             db.commit()
             return
 
@@ -139,7 +139,7 @@ async def remove_content_from_module(
 async def validate_module_content(
     course_id: str,
     module_id: str,
-    _current_user: str = Depends(get_current_user),
+    _current_user: str = Depends(require_user_role),
     db: Session = Depends(get_db),
 ):
     """Validate that all content references in a module exist"""
@@ -147,7 +147,7 @@ async def validate_module_content(
     if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
-    modules = course.modules or []
+    modules: list[dict[str, Any]] = list(course.modules) if course.modules else []  # type: ignore[arg-type]
     for module in modules:
         if isinstance(module, dict) and module.get("id") == module_id:
             resolver = CourseContentResolver()

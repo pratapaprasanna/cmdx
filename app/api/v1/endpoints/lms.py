@@ -4,10 +4,9 @@ LMS endpoints
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from typing import List as ListType
 from sqlalchemy.orm import Session
 
-from app.api.v1.endpoints.auth import get_current_user
+from app.api.v1.endpoints.auth import get_current_user, require_admin_role, require_user_role
 from app.db.base import get_db
 from app.db.models import User
 from app.schemas.lms import CourseCreate, CourseResponse, CourseUpdate, EnrollmentRequest
@@ -26,9 +25,9 @@ async def get_current_user_id(current_user: str = Depends(get_current_user), db:
 
 @router.post("/courses", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
 async def create_course(
-    course: CourseCreate, _current_user: str = Depends(get_current_user), db: Session = Depends(get_db)
+    course: CourseCreate, _current_user: str = Depends(require_admin_role), db: Session = Depends(get_db)
 ):
-    """Create a new course"""
+    """Create a new course (Admin only)"""
     lms_service = LMSService(db=db)
     course_data = course.dict()
     result = await lms_service.create_course(course_data)
@@ -39,10 +38,10 @@ async def create_course(
 async def get_course(
     course_id: str,
     resolve_content: bool = Query(False, description="Resolve CMS content in modules"),
-    _current_user: str = Depends(get_current_user),
+    _current_user: str = Depends(require_user_role),
     db: Session = Depends(get_db),
 ):
-    """Get course by ID with optional content resolution"""
+    """Get course by ID with optional content resolution (Requires authentication - user or admin token)"""
     lms_service = LMSService(db=db)
     result = await lms_service.get_course(course_id, resolve_content=resolve_content)
     if not result:
@@ -52,9 +51,9 @@ async def get_course(
 
 @router.put("/courses/{course_id}", response_model=CourseResponse)
 async def update_course(
-    course_id: str, course: CourseUpdate, _current_user: str = Depends(get_current_user), db: Session = Depends(get_db)
+    course_id: str, course: CourseUpdate, _current_user: str = Depends(require_admin_role), db: Session = Depends(get_db)
 ):
-    """Update existing course"""
+    """Update existing course (Admin only)"""
     lms_service = LMSService(db=db)
     course_data = course.dict(exclude_unset=True)
     result = await lms_service.update_course(course_id, course_data)
@@ -64,8 +63,8 @@ async def update_course(
 
 
 @router.delete("/courses/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_course(course_id: str, _current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Delete course"""
+async def delete_course(course_id: str, _current_user: str = Depends(require_admin_role), db: Session = Depends(get_db)):
+    """Delete course (Admin only)"""
     lms_service = LMSService(db=db)
     success = await lms_service.delete_course(course_id)
     if not success:
@@ -76,10 +75,10 @@ async def delete_course(course_id: str, _current_user: str = Depends(get_current
 async def list_courses(
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
-    _current_user: str = Depends(get_current_user),
+    _current_user: str = Depends(require_user_role),
     db: Session = Depends(get_db),
 ):
-    """List all courses with pagination"""
+    """List all courses with pagination (Requires authentication - user or admin token)"""
     lms_service = LMSService(db=db)
     results = await lms_service.list_courses(limit=limit, offset=offset)
     return [CourseResponse(**item) for item in results]
@@ -87,7 +86,7 @@ async def list_courses(
 
 @router.post("/enrollments", status_code=status.HTTP_201_CREATED)
 async def enroll_user(
-    enrollment: EnrollmentRequest, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)
+    enrollment: EnrollmentRequest, current_user: str = Depends(require_user_role), db: Session = Depends(get_db)
 ):
     """Enroll a user in a course"""
     lms_service = LMSService(db=db)
@@ -103,7 +102,7 @@ async def enroll_user(
 
 
 @router.delete("/enrollments/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def unenroll_user(course_id: str, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+async def unenroll_user(course_id: str, current_user: str = Depends(require_user_role), db: Session = Depends(get_db)):
     """Unenroll a user from a course"""
     lms_service = LMSService(db=db)
     user_id = await get_current_user_id(current_user, db)
@@ -115,7 +114,7 @@ async def unenroll_user(course_id: str, current_user: str = Depends(get_current_
 @router.get("/my-courses", response_model=List[CourseResponse])
 async def get_my_courses(
     resolve_content: bool = Query(False, description="Resolve CMS content in modules"),
-    current_user: str = Depends(get_current_user),
+    current_user: str = Depends(require_user_role),
     db: Session = Depends(get_db),
 ):
     """Get all courses the current user is enrolled in"""

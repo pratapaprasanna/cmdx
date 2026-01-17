@@ -126,7 +126,9 @@ Response: `201 Created`
 
 ## CMS Endpoints
 
-All CMS endpoints require authentication.
+**⚠️ All CMS endpoints require `admin` role.**
+
+All CMS endpoints require authentication with admin role. Regular users will receive 403 Forbidden.
 
 ### List Plugins
 
@@ -242,7 +244,9 @@ Response: `200 OK`
 
 ## LMS Endpoints
 
-All LMS endpoints require authentication.
+**✅ All LMS endpoints require `user` role (any authenticated user).**
+
+All LMS endpoints require authentication. Since all users get the `user` role by default, any authenticated user can access LMS endpoints.
 
 ### Create Course
 

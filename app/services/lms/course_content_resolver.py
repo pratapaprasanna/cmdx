@@ -1,7 +1,7 @@
 """
 Service for resolving CMS content in LMS courses
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from app.services.cms.cms_service import CMSService
 from app.services.cms.plugins.registry import PluginRegistry
@@ -105,7 +105,7 @@ class CourseContentResolver:
         Returns:
             Dictionary with validation results
         """
-        validation_result = {
+        validation_result: Dict[str, Any] = {
             "valid": True,
             "errors": [],
             "missing_content": [],

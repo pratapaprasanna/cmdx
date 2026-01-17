@@ -170,28 +170,188 @@ The API will be available at:
 
 **Note:** If a user has no roles, the default "user" role is automatically assigned when querying roles.
 
-### CMS
+### CMS (Content Management System)
 
-- `GET /plugins` - List available storage plugins
-- `POST /contents` - Create new content
-- `GET /contents/{content_id}` - Get content by ID
-- `PUT /contents/{content_id}` - Update content
-- `DELETE /contents/{content_id}` - Delete content
-- `GET /contents` - List all content (with pagination)
+**All CMS endpoints require admin role.**
+
+#### List Available Plugins
+```bash
+curl -X GET "http://localhost:8000/api/v1/plugins" \
+  -H "Authorization: Bearer <admin_token>"
+```
+
+#### Create Content
+```bash
+# Create content with text
+curl -X POST "http://localhost:8000/api/v1/contents?plugin=filesystem" \
+  -H "Authorization: Bearer <admin_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "My Content",
+    "body": "Content text here...",
+    "metadata": {"category": "tutorial"}
+  }'
+
+# Create content from PDF file
+curl -X POST "http://localhost:8000/api/v1/contents?plugin=filesystem" \
+  -H "Authorization: Bearer <admin_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Python Basics",
+    "file_path": "/path/to/file.pdf",
+    "metadata": {"category": "programming"}
+  }'
+```
+
+#### Get Content by ID
+```bash
+curl -X GET "http://localhost:8000/api/v1/contents/{content_id}?plugin=filesystem" \
+  -H "Authorization: Bearer <admin_token>"
+```
+
+#### Update Content
+```bash
+curl -X PUT "http://localhost:8000/api/v1/contents/{content_id}?plugin=filesystem" \
+  -H "Authorization: Bearer <admin_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Updated Title",
+    "body": "Updated content..."
+  }'
+```
+
+#### Delete Content
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/contents/{content_id}?plugin=filesystem" \
+  -H "Authorization: Bearer <admin_token>"
+```
+
+#### List All Content (with pagination)
+```bash
+curl -X GET "http://localhost:8000/api/v1/contents?plugin=filesystem&limit=20&offset=0" \
+  -H "Authorization: Bearer <admin_token>"
+```
 
 **Query Parameters:**
-- `plugin` - Specify which plugin to use (database or filesystem)
+- `plugin` - Specify which plugin to use (`database` or `filesystem`)
+- `limit` - Maximum number of results (default: 100, max: 1000)
+- `offset` - Number of results to skip (default: 0)
 
-### LMS
+### LMS (Learning Management System)
 
-- `POST /courses` - Create a new course
-- `GET /courses/{course_id}` - Get course by ID
-- `PUT /courses/{course_id}` - Update course
-- `DELETE /courses/{course_id}` - Delete course
-- `GET /courses` - List all courses (with pagination)
-- `POST /enrollments` - Enroll a user in a course
-- `DELETE /enrollments/{course_id}` - Unenroll from a course
-- `GET /my-courses` - Get current user's enrolled courses
+#### Create Course (Admin only)
+```bash
+curl -X POST "http://localhost:8000/api/v1/courses" \
+  -H "Authorization: Bearer <admin_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Python Programming",
+    "description": "Learn Python from scratch",
+    "instructor": "John Doe",
+    "modules": [
+      {
+        "id": "module_1",
+        "title": "Introduction",
+        "description": "Python basics",
+        "order": 1,
+        "content_items": [
+          {
+            "content_id": "fs_1",
+            "plugin": "filesystem",
+            "type": "lesson",
+            "order": 1
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+#### Get Course by ID (Requires authentication - user or admin token)
+```bash
+# Get course without resolved content
+curl -X GET "http://localhost:8000/api/v1/courses/{course_id}" \
+  -H "Authorization: Bearer <user_or_admin_token>"
+
+# Get course with resolved CMS content
+curl -X GET "http://localhost:8000/api/v1/courses/{course_id}?resolve_content=true" \
+  -H "Authorization: Bearer <user_or_admin_token>"
+```
+
+#### Update Course (Admin only)
+```bash
+curl -X PUT "http://localhost:8000/api/v1/courses/{course_id}" \
+  -H "Authorization: Bearer <admin_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Updated Course Title",
+    "description": "Updated description",
+    "modules": [...]
+  }'
+```
+
+#### Delete Course (Admin only)
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/courses/{course_id}" \
+  -H "Authorization: Bearer <admin_token>"
+```
+
+#### List All Courses (Requires authentication - user or admin token)
+```bash
+curl -X GET "http://localhost:8000/api/v1/courses?limit=20&offset=0" \
+  -H "Authorization: Bearer <user_or_admin_token>"
+```
+
+#### Add Content to Module (Admin only)
+```bash
+curl -X POST "http://localhost:8000/api/v1/courses/{course_id}/modules/{module_id}/content" \
+  -H "Authorization: Bearer <admin_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content_id": "fs_1",
+    "plugin": "filesystem",
+    "type": "lesson",
+    "order": 1
+  }'
+```
+
+#### Remove Content from Module (Admin only)
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/courses/{course_id}/modules/{module_id}/content/{content_id}?plugin=filesystem" \
+  -H "Authorization: Bearer <admin_token>"
+```
+
+#### Enroll in Course (Requires authentication - user or admin token)
+```bash
+curl -X POST "http://localhost:8000/api/v1/enrollments" \
+  -H "Authorization: Bearer <user_or_admin_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "course_id": "course_123"
+  }'
+```
+
+#### Unenroll from Course (Requires authentication - user or admin token)
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/enrollments/{course_id}" \
+  -H "Authorization: Bearer <user_or_admin_token>"
+```
+
+#### Get My Enrolled Courses (Requires authentication - user or admin token)
+```bash
+# Get enrolled courses without resolved content
+curl -X GET "http://localhost:8000/api/v1/my-courses" \
+  -H "Authorization: Bearer <user_or_admin_token>"
+
+# Get enrolled courses with resolved CMS content
+curl -X GET "http://localhost:8000/api/v1/my-courses?resolve_content=true" \
+  -H "Authorization: Bearer <user_or_admin_token>"
+```
+
+**Query Parameters:**
+- `resolve_content` - If `true`, fetches and embeds full CMS content in course modules (default: `false`)
+- `limit` - Maximum number of results for list endpoints (default: 100, max: 1000)
+- `offset` - Number of results to skip for list endpoints (default: 0)
 
 ## CMS Plugin System
 

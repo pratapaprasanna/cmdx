@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.core.rbac_middleware import RBACMiddleware
 
 
 @asynccontextmanager
@@ -33,6 +34,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# RBAC middleware (enforces role-based access control based on route tags)
+app.add_middleware(RBACMiddleware, enabled=True)
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)

@@ -46,12 +46,17 @@ class AuthService:
         self.db.add(default_role)
         self.db.commit()
 
+        # Convert timestamps to epoch
+        created_at_epoch = int(db_user.created_at.timestamp()) if db_user.created_at else 0
+        updated_at_epoch = int(db_user.updated_at.timestamp()) if db_user.updated_at else created_at_epoch
+        
         return UserResponse(
             id=db_user.id,  # type: ignore[arg-type]
             username=db_user.username,  # type: ignore[arg-type]
             email=db_user.email,  # type: ignore[arg-type]
             is_active=db_user.is_active,  # type: ignore[arg-type]
-            created_at=db_user.created_at,  # type: ignore[arg-type]
+            created_at=created_at_epoch,
+            updated_at=updated_at_epoch,
         )
 
     async def authenticate_user(self, username: str, password: str) -> Optional[UserResponse]:
@@ -67,12 +72,17 @@ class AuthService:
         if not user.is_active:
             return None
 
+        # Convert timestamps to epoch
+        created_at_epoch = int(user.created_at.timestamp()) if user.created_at else 0
+        updated_at_epoch = int(user.updated_at.timestamp()) if user.updated_at else created_at_epoch
+
         return UserResponse(
             id=user.id,  # type: ignore[arg-type]
             username=user.username,  # type: ignore[arg-type]
             email=user.email,  # type: ignore[arg-type]
             is_active=user.is_active,  # type: ignore[arg-type]
-            created_at=user.created_at,  # type: ignore[arg-type]
+            created_at=created_at_epoch,
+            updated_at=updated_at_epoch,
         )
 
     async def get_user_by_username(self, username: str) -> Optional[UserResponse]:
@@ -81,12 +91,17 @@ class AuthService:
         if not user:
             return None
 
+        # Convert timestamps to epoch
+        created_at_epoch = int(user.created_at.timestamp()) if user.created_at else 0
+        updated_at_epoch = int(user.updated_at.timestamp()) if user.updated_at else created_at_epoch
+
         return UserResponse(
             id=user.id,  # type: ignore[arg-type]
             username=user.username,  # type: ignore[arg-type]
             email=user.email,  # type: ignore[arg-type]
             is_active=user.is_active,  # type: ignore[arg-type]
-            created_at=user.created_at,  # type: ignore[arg-type]
+            created_at=created_at_epoch,
+            updated_at=updated_at_epoch,
         )
 
     async def add_role_to_user(self, user_id: str, role: RoleType) -> Optional[Role]:

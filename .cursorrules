@@ -185,6 +185,20 @@ async def get_user_roles(user_id: str, db: Session = Depends(get_db)):
 @router.post("/users")  # ❌ Should have status_code=201
 ```
 
+## Documentation Files
+
+### Markdown Files
+- **MUST NOT** create or write markdown files (`.md`) unless explicitly requested by the user
+- **MUST NOT** create documentation files like `README.md`, `API.md`, `ARCHITECTURE.md`, etc. unless the user explicitly asks for them
+- **SHOULD** focus on code implementation rather than documentation
+- **MAY** update existing markdown files if the user explicitly requests it
+- **MUST** avoid creating documentation to "save tokens" - only create when user explicitly asks
+
+### When Documentation is Requested
+- If user explicitly asks for documentation, then create it
+- If user asks to "update documentation", modify existing files only
+- If user asks to "document X", create appropriate documentation
+
 ## References
 - White House Web API Standards: https://apistylebook.com/design/guidelines/white-house-web-api-standards
 - FastAPI Documentation: https://fastapi.tiangolo.com/

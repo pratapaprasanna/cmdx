@@ -7,6 +7,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from app.services.cms.plugins.base import BasePlugin
+from app.services.cms.plugins.utils.filesystem.pdf_utils import (
+    PDFValidationError,
+    check_pdf_requirements,
+    read_pdf_content,
+    validate_pdf_file,
+)
 
 
 class FilesystemPlugin(BasePlugin):
@@ -54,12 +60,44 @@ class FilesystemPlugin(BasePlugin):
         if not self.connected:
             await self.connect()
 
+        # Handle PDF file_path if provided
+        body = content_data.get("body", "")
+        # Get request metadata (user-provided)
+        request_metadata = content_data.get("metadata", {}).copy() if content_data.get("metadata") else {}
+        
+        file_path = content_data.get("file_path")
+        if file_path:
+            # Validate and process PDF
+            if not check_pdf_requirements():
+                raise ValueError("PyPDF2 is required for PDF processing. Install it with: pip install PyPDF2")
+            
+            is_valid, error_msg = validate_pdf_file(file_path)
+            if not is_valid:
+                raise ValueError(f"PDF validation failed: {error_msg}")
+            
+            # Read PDF content
+            try:
+                pdf_text, pdf_metadata = read_pdf_content(file_path)
+                # Use PDF text as body if body not provided
+                if not body:
+                    body = pdf_text
+                # Merge metadata: PDF metadata first (base), then request metadata on top (takes precedence)
+                metadata = {**pdf_metadata, **request_metadata}
+            except PDFValidationError as e:
+                raise ValueError(f"Error processing PDF: {str(e)}") from e
+        else:
+            # No PDF, just use request metadata
+            metadata = request_metadata
+
+        if not body:
+            raise ValueError("Either 'body' or 'file_path' must be provided")
+
         content_id = content_data.get("id") or f"fs_{len(list(self.base_path.glob('*.json'))) + 1}"
         content = {
             "id": content_id,
             "title": content_data.get("title", ""),
-            "body": content_data.get("body", ""),
-            "metadata": content_data.get("metadata", {}),
+            "body": body,
+            "metadata": metadata,
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat(),
             "plugin": "filesystem",

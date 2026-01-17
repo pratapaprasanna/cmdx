@@ -1,0 +1,23 @@
+{
+  "id": "fs_4",
+  "title": "Python Basics",
+  "body": "--- Page 1 ---\n\nPython Basics \u2013 Introduction\nPython is a high-level, interpreted, and general-purpose programming language known for its\nsimplicity and readability. It is widely used in web development, data science, automation, DevOps,\nartificial intelligence, and scripting.\nWhy Python?\n\u007f Easy to learn and read\n\u007f Large standard library\n\u007f Cross-platform support\n\u007f Strong community and ecosystem\nInstalling Python\nPython can be installed from python.org. Most Linux and macOS systems come with Python\npre-installed. Verify installation using:\npython --version\nFirst Python Program\nprint('Hello, World!')\nThis simple program prints text to the console.\n\n\n--- Page 2 ---\n\nVariables and Data Types\nVariables store data values. Python is dynamically typed, meaning you do not need to declare\nvariable types.\nExamples:\nx = 10 (int)\ny = 3.14 (float)\nname = 'Python' (string)\nis_active = True (boolean)\nBasic Operators\nArithmetic: + - * / %\nComparison: == != > < >= <=\nLogical: and or not\nControl Flow\nConditional Statements:\nif condition:\n  statement\nelif condition:\n  statement\nelse:\n  statement\nLoops\nfor loop example:\nfor i in range(5):\n  print(i)\nwhile loop example:\nwhile x < 5:\n  x += 1\n\n\n--- Page 3 ---\n\nFunctions\nFunctions are reusable blocks of code.\nExample:\ndef add(a, b):\n  return a + b\nLists, Tuples, and Dictionaries\nList: ordered and mutable\nnumbers = [1, 2, 3]\nTuple: ordered and immutable\npoint = (10, 20)\nDictionary: key-value pairs\nuser = {'name': 'Alex', 'age': 30}\nException Handling\nPython uses try-except blocks to handle errors.\nExample:\ntry:\n  x = int(input())\nexcept ValueError:\n  print('Invalid input')\nConclusion\nPython\u2019s simplicity and power make it an excellent choice for beginners and professionals alike.\nMastering the basics is the first step toward advanced Python development.",
+  "metadata": {
+    "title": "(anonymous)",
+    "author": "(anonymous)",
+    "subject": "(unspecified)",
+    "creator": "(unspecified)",
+    "producer": "ReportLab PDF Library - www.reportlab.com",
+    "creation_date_epoch": 1768636368,
+    "modification_date_epoch": 1768636368,
+    "source": "pdf",
+    "source_file": "python_basics.pdf",
+    "source_path": "/Users/gouthampratapa/Documents/python_basics.pdf",
+    "total_pages": 3,
+    "file_size": 4481,
+    "category": "programming"
+  },
+  "created_at": "2026-01-17T13:53:29.408828",
+  "updated_at": "2026-01-17T13:53:29.408834",
+  "plugin": "filesystem"
+}
