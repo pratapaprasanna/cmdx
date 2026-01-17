@@ -11,6 +11,7 @@ from app.services.cms.plugins.base import BasePlugin
 
 class FilesystemPlugin(BasePlugin):
     """Plugin for filesystem-based content storage"""
+
     # pylint: disable=broad-exception-caught
 
     def __init__(self, name: str, config: Optional[Dict[str, Any]] = None):

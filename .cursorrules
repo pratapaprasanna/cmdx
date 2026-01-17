@@ -1,0 +1,191 @@
+# White House Web API Standards Compliance Rules
+
+This project follows the **White House Web API Standards** as defined at https://apistylebook.com/design/guidelines/white-house-web-api-standards
+
+## API Design Requirements
+
+### 1. RESTful URL Guidelines
+- **MUST** use plural nouns for collection resources (e.g., `/users`, `/courses`, `/contents`)
+- **MUST NOT** use verbs in URL paths (e.g., avoid `/get-users`, `/delete-content`; use `/users`, `/contents/{id}` with appropriate HTTP methods)
+- **MUST** use lowercase letters and hyphens for multi-word resources (e.g., `/user-roles`, `/course-enrollments`)
+- **MUST** use path parameters for resource identifiers (e.g., `/users/{user_id}`, `/courses/{course_id}`)
+- **MUST NOT** nest resources more than 2 levels deep (e.g., prefer `/users/{user_id}/roles` over `/organizations/{org_id}/users/{user_id}/roles`)
+
+### 2. API Versioning
+- **MUST** include version prefix in all API paths: `/api/v1/...`, `/api/v2/...`
+- **MUST** use integer version numbers (v1, v2, v3), not decimals (v1.1, v1.2)
+- **MUST** define version in router prefix: `router = APIRouter(prefix="/api/v1/...")` or include in main app
+
+### 3. HTTP Methods
+- **GET**: Retrieve resources (idempotent, no side effects)
+  - Use for: listing collections, retrieving single resources
+  - Status codes: 200 OK, 404 Not Found
+- **POST**: Create new resources
+  - Use for: creating new resources, actions that create side effects
+  - Status codes: 201 Created, 400 Bad Request, 409 Conflict
+  - **MUST** return 201 Created with `Location` header when creating resources
+- **PUT**: Update/replace entire resource
+  - Use for: full resource updates
+  - Status codes: 200 OK, 204 No Content, 404 Not Found
+- **DELETE**: Remove resources
+  - Use for: deleting resources
+  - Status codes: 204 No Content, 404 Not Found
+  - **MUST** return 204 No Content on successful deletion
+
+### 4. HTTP Status Codes
+- **2xx Success**:
+  - 200 OK: Successful GET, PUT requests
+  - 201 Created: Successful POST that creates a resource
+  - 204 No Content: Successful DELETE or PUT that returns no body
+- **4xx Client Errors**:
+  - 400 Bad Request: Malformed request, validation errors
+  - 401 Unauthorized: Authentication required or failed
+  - 403 Forbidden: Authenticated but not authorized
+  - 404 Not Found: Resource doesn't exist
+  - 409 Conflict: Resource conflict (e.g., duplicate email)
+  - 422 Unprocessable Entity: Validation errors (FastAPI default for Pydantic)
+- **5xx Server Errors**:
+  - 500 Internal Server Error: Unexpected server errors
+
+### 5. Error Handling
+- **MUST** use consistent error response format:
+```python
+HTTPException(
+    status_code=status.HTTP_404_NOT_FOUND,
+    detail={
+        "status": 404,
+        "developerMessage": "Detailed technical error message",
+        "userMessage": "User-friendly error message",
+        "errorCode": "RESOURCE_NOT_FOUND",
+        "moreInfo": "https://api.example.com/docs/errors#RESOURCE_NOT_FOUND"
+    }
+)
+```
+- **SHOULD** provide both developer and user messages
+- **SHOULD** include error codes for programmatic handling
+- **SHOULD** include links to documentation when applicable
+
+### 6. Response Models
+- **MUST** use Pydantic response models for all endpoints: `response_model=ResourceResponse`
+- **MUST** use consistent naming: `{Resource}Response`, `{Resource}Create`, `{Resource}Update`
+- **SHOULD** include metadata in list responses:
+```python
+{
+    "data": [...],
+    "count": 100,
+    "offset": 0,
+    "limit": 20
+}
+```
+
+### 7. Pagination and Filtering
+- **MUST** support pagination for collection endpoints using query parameters:
+  - `limit`: Maximum number of results (default: 100, max: 1000)
+  - `offset`: Number of results to skip (default: 0)
+- **SHOULD** use query parameters for filtering: `?status=active&role=admin`
+- **MUST** return pagination metadata in list responses
+
+### 8. Content Negotiation
+- **MUST** support JSON format (default)
+- **SHOULD** set proper Content-Type headers
+- **MUST** use `application/json` for request/response bodies
+
+### 9. Authentication and Authorization
+- **MUST** use Bearer token authentication for protected endpoints
+- **MUST** return 401 Unauthorized with `WWW-Authenticate: Bearer` header when authentication fails
+- **SHOULD** use dependency injection for authentication: `current_user: str = Depends(get_current_user)`
+
+### 10. Naming Conventions
+- **MUST** use snake_case for Python variables and functions
+- **MUST** use camelCase for JSON field names in Pydantic models (or configure `alias_generator`)
+- **MUST** use descriptive endpoint function names: `get_user_roles`, `create_content`, `update_course`
+
+## FastAPI-Specific Requirements
+
+### Endpoint Structure
+```python
+@router.get("/resources/{resource_id}", response_model=ResourceResponse)
+async def get_resource(
+    resource_id: str,
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get resource by ID"""
+    # Implementation
+```
+
+### Required Imports
+```python
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+```
+
+### Response Status Codes
+- Always specify `status_code` in decorator for non-200 responses:
+  - `@router.post(..., status_code=status.HTTP_201_CREATED)`
+  - `@router.delete(..., status_code=status.HTTP_204_NO_CONTENT)`
+
+## Code Review Checklist
+
+When creating or modifying endpoints, ensure:
+- [ ] URL follows RESTful conventions (plural nouns, no verbs)
+- [ ] Version prefix `/api/v1/` is included
+- [ ] Appropriate HTTP method is used (GET/POST/PUT/DELETE)
+- [ ] Response model is defined
+- [ ] Proper HTTP status codes are used
+- [ ] Error handling follows standard format
+- [ ] Pagination is implemented for list endpoints
+- [ ] Authentication is applied where needed
+- [ ] Endpoint has descriptive docstring
+- [ ] Query parameters are properly validated
+
+## Examples
+
+### ✅ Good Examples
+```python
+# Collection endpoint with pagination
+@router.get("/users", response_model=List[UserResponse])
+async def list_users(
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db)
+):
+    """List users with pagination"""
+    # Implementation
+
+# Resource creation
+@router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
+    """Create a new user"""
+    # Implementation
+
+# Resource retrieval
+@router.get("/users/{user_id}/roles", response_model=RolesResponse)
+async def get_user_roles(user_id: str, db: Session = Depends(get_db)):
+    """Get all roles for a user"""
+    # Implementation
+```
+
+### ❌ Bad Examples
+```python
+# Verb in URL path
+@router.get("/get-users")  # ❌ Use /users instead
+
+# Missing version
+@router.get("/users")  # ❌ Should be /api/v1/users
+
+# Wrong HTTP method
+@router.get("/users", method="POST")  # ❌ Use @router.post
+
+# Missing response model
+@router.get("/users")  # ❌ Should have response_model
+
+# Missing status code for creation
+@router.post("/users")  # ❌ Should have status_code=201
+```
+
+## References
+- White House Web API Standards: https://apistylebook.com/design/guidelines/white-house-web-api-standards
+- FastAPI Documentation: https://fastapi.tiangolo.com/
+- HTTP Status Codes: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status

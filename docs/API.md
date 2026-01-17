@@ -324,17 +324,42 @@ Response: `200 OK`
 
 ## Error Responses
 
-All endpoints may return the following error responses:
+All endpoints follow the **White House Web API Standards** for error handling.
 
-- `400 Bad Request`: Invalid request data
+### HTTP Status Codes
+
+- `200 OK`: Successful GET, PUT requests
+- `201 Created`: Successful POST that creates a resource
+- `204 No Content`: Successful DELETE or PUT that returns no body
+- `400 Bad Request`: Invalid request data, validation errors
 - `401 Unauthorized`: Missing or invalid authentication token
+- `403 Forbidden`: Authenticated but not authorized
 - `404 Not Found`: Resource not found
-- `500 Internal Server Error`: Server error
+- `409 Conflict`: Resource conflict (e.g., duplicate email)
+- `422 Unprocessable Entity`: Validation errors (Pydantic)
+- `500 Internal Server Error`: Unexpected server errors
 
-Error response format:
+### Error Response Format
+
+Following White House Web API Standards, error responses use a standardized format:
+
 ```json
 {
-  "detail": "Error message"
+  "detail": {
+    "status": 404,
+    "developerMessage": "User with id 'abc123' not found",
+    "userMessage": "User not found",
+    "errorCode": "USER_NOT_FOUND",
+    "moreInfo": "https://api.example.com/docs/errors#USER_NOT_FOUND"
+  }
 }
 ```
 
+**Fields:**
+- `status`: HTTP status code (integer)
+- `developerMessage`: Detailed technical error message for developers
+- `userMessage`: User-friendly error message
+- `errorCode`: Machine-readable error code (optional)
+- `moreInfo`: URL to documentation about this error (optional)
+
+**Note:** Some endpoints may still return simple string error messages in the `detail` field for backward compatibility, but new endpoints should use the standardized format.

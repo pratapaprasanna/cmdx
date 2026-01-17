@@ -65,6 +65,6 @@ def test_user(db_session):
 @pytest.fixture
 def auth_headers(client, test_user):
     """Get authentication headers for test user"""
-    response = client.post("/api/v1/auth/login", data={"username": "testuser", "password": "testpassword"})
+    response = client.post("/api/v1/tokens", data={"username": "testuser", "password": "testpassword"})
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

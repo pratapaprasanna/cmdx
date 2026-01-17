@@ -2,13 +2,13 @@
 Authentication service
 """
 import uuid
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash, verify_password
 from app.db.base import SessionLocal
-from app.db.models import User
+from app.db.models import User, Role, RoleType
 from app.schemas.auth import UserResponse
 
 
@@ -26,7 +26,7 @@ class AuthService:
             self.db.close()
 
     async def create_user(self, email: str, password: str) -> Optional[UserResponse]:
-        """Create a new user"""
+        """Create a new user and assign default 'user' role"""
         # Check if user already exists
         existing_user = self.db.query(User).filter(User.email == email).first()
 
@@ -40,6 +40,11 @@ class AuthService:
         self.db.add(db_user)
         self.db.commit()
         self.db.refresh(db_user)
+
+        # Assign default 'user' role
+        default_role = Role(user_id=db_user.id, role=RoleType.user)
+        self.db.add(default_role)
+        self.db.commit()
 
         return UserResponse(
             id=db_user.id,
@@ -75,3 +80,52 @@ class AuthService:
         return UserResponse(
             id=user.id, username=user.username, email=user.email, is_active=user.is_active, created_at=user.created_at
         )
+
+    async def add_role_to_user(self, user_id: str, role: RoleType) -> Optional[Role]:
+        """Add a role to a user
+        user_id can be either the user's UUID (id) or username
+        """
+        # Try to find user by ID first (UUID format)
+        user = self.db.query(User).filter(User.id == user_id).first()
+        # If not found, try username
+        if not user:
+            user = self.db.query(User).filter(User.username == user_id).first()
+        if not user:
+            return None
+
+        # check if role already exists
+        existing_role = self.db.query(Role).filter(Role.user_id == user.id, Role.role == role).first()
+        if existing_role:
+            return existing_role
+
+        new_role = Role(user_id=user.id, role=role)
+        self.db.add(new_role)
+        self.db.commit()
+        self.db.refresh(new_role)
+        return new_role
+
+    async def get_user_roles(self, user_id: str) -> Optional[List[Role]]:
+        """Get all roles for a user
+        user_id can be either the user's UUID (id) or username
+        Also ensures the user has a default 'user' role if no roles exist
+        """
+        # Try to find user by ID first (UUID format)
+        user = self.db.query(User).filter(User.id == user_id).first()
+        # If not found, try username
+        if not user:
+            user = self.db.query(User).filter(User.username == user_id).first()
+        if not user:
+            return None
+
+        # Get all roles for the user
+        roles = self.db.query(Role).filter(Role.user_id == user.id).all()
+
+        # If user has no roles, assign default 'user' role
+        if not roles:
+            default_role = Role(user_id=user.id, role=RoleType.user)
+            self.db.add(default_role)
+            self.db.commit()
+            self.db.refresh(default_role)
+            return [default_role]
+
+        return roles

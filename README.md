@@ -11,6 +11,7 @@ A FastAPI-based Content Management System with Authentication, CMS, and Learning
 - **PostgreSQL Integration**: Full PostgreSQL database support with SQLAlchemy ORM
 - **Comprehensive Tests**: Full test coverage for all services
 - **API Documentation**: Auto-generated OpenAPI/Swagger documentation
+- **API Standards Compliance**: Follows [White House Web API Standards](https://apistylebook.com/design/guidelines/white-house-web-api-standards)
 
 ## Project Structure
 
@@ -26,7 +27,8 @@ cmdx/
 │   │       └── router.py         # API router
 │   ├── core/
 │   │   ├── config.py            # Application configuration
-│   │   └── security.py          # Security utilities (JWT, password hashing)
+│   │   ├── security.py          # Security utilities (JWT, password hashing)
+│   │   └── exceptions.py        # Standardized error handling
 │   ├── db/
 │   │   ├── base.py              # Database connection and session
 │   │   └── models.py            # SQLAlchemy models
@@ -117,41 +119,41 @@ The API will be available at:
 
 ## API Endpoints
 
-### Authentication (`/api/v1/auth`)
+### Authentication
 
-- `POST /register` - Register a new user
+- `POST /users` - Register a new user
   ```bash
-  curl -X POST "http://localhost:8000/api/v1/auth/register" \
+  curl -X POST "http://localhost:8000/api/v1/users" \
     -H "Content-Type: application/json" \
     -d '{"email": "test@example.com", "password": "securepassword"}'
   ```
 
-- `POST /login` - Login and get access token
+- `POST /tokens` - Login and get access token
   ```bash
-  curl -X POST "http://localhost:8000/api/v1/auth/login" \
+  curl -X POST "http://localhost:8000/api/v1/tokens" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "username=test@example.com&password=securepassword"
   ```
 
-- `GET /me` - Get current user information
+- `GET /users/me` - Get current user information
   ```bash
-  curl -X GET "http://localhost:8000/api/v1/auth/me" \
+  curl -X GET "http://localhost:8000/api/v1/users/me" \
     -H "Authorization: Bearer <your_access_token>"
   ```
 
-### CMS (`/api/v1/cms`)
+### CMS
 
 - `GET /plugins` - List available storage plugins
-- `POST /content` - Create new content
-- `GET /content/{content_id}` - Get content by ID
-- `PUT /content/{content_id}` - Update content
-- `DELETE /content/{content_id}` - Delete content
-- `GET /content` - List all content (with pagination)
+- `POST /contents` - Create new content
+- `GET /contents/{content_id}` - Get content by ID
+- `PUT /contents/{content_id}` - Update content
+- `DELETE /contents/{content_id}` - Delete content
+- `GET /contents` - List all content (with pagination)
 
 **Query Parameters:**
 - `plugin` - Specify which plugin to use (database or filesystem)
 
-### LMS (`/api/v1/lms`)
+### LMS
 
 - `POST /courses` - Create a new course
 - `GET /courses/{course_id}` - Get course by ID
@@ -177,10 +179,10 @@ Specify the plugin when making CMS requests:
 
 ```bash
 # Use database plugin (default)
-POST /api/v1/cms/content?plugin=database
+POST /api/v1/contents?plugin=database
 
 # Use filesystem plugin
-POST /api/v1/cms/content?plugin=filesystem
+POST /api/v1/contents?plugin=filesystem
 ```
 
 ### Creating Custom Plugins
@@ -264,7 +266,25 @@ alembic downgrade -1
 
 This project is open source and available under the MIT License.
 
+## API Standards
+
+This project follows the **White House Web API Standards** as defined at https://apistylebook.com/design/guidelines/white-house-web-api-standards
+
+Key principles:
+- RESTful URL design (plural nouns, no verbs in paths)
+- Proper HTTP method usage (GET, POST, PUT, DELETE)
+- Standardized error responses
+- API versioning (`/api/v1/...`)
+- Pagination and filtering support
+
+See `.cursorrules` for detailed coding standards and requirements for all new endpoints.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+**Before submitting:**
+- Ensure all new endpoints follow the White House Web API Standards (see `.cursorrules`)
+- Add tests for new functionality
+- Update API documentation
+- Follow the existing code style and structure

@@ -2,10 +2,12 @@
 Authentication schemas
 """
 from datetime import datetime
+from typing import List
 
 from pydantic import BaseModel, EmailStr, field_validator
 
 from app.core.validators import validate_password_strength
+from app.db.models import RoleType
 
 
 class UserBase(BaseModel):
@@ -49,3 +51,30 @@ class Token(BaseModel):
 
     access_token: str
     token_type: str
+
+
+class RoleCreate(BaseModel):
+    """Role creation schema"""
+
+    role: RoleType
+
+
+class RoleResponse(BaseModel):
+    """Role response schema"""
+
+    id: str
+    user_id: str
+    role: RoleType
+
+    class Config:
+        from_attributes = True
+
+
+class RolesResponse(BaseModel):
+    """Multiple roles response schema"""
+
+    user_id: str
+    roles: List[RoleResponse]
+
+    class Config:
+        from_attributes = True

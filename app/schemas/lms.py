@@ -34,8 +34,8 @@ class CourseResponse(CourseBase):
     """Course response schema"""
 
     id: str
-    created_at: str
-    updated_at: str
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
     class Config:
         from_attributes = True

@@ -19,7 +19,7 @@ async def list_plugins(_current_user: str = Depends(get_current_user)):
     return cms_service.get_available_plugins()
 
 
-@router.post("/content", response_model=ContentResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/contents", response_model=ContentResponse, status_code=status.HTTP_201_CREATED)
 async def create_content(
     content: ContentCreate,
     plugin: Optional[str] = Query(None, description="Plugin name to use"),
@@ -35,7 +35,7 @@ async def create_content(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
-@router.get("/content/{content_id}", response_model=ContentResponse)
+@router.get("/contents/{content_id}", response_model=ContentResponse)
 async def get_content(
     content_id: str,
     plugin: Optional[str] = Query(None, description="Plugin name to use"),
@@ -52,7 +52,7 @@ async def get_content(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
-@router.put("/content/{content_id}", response_model=ContentResponse)
+@router.put("/contents/{content_id}", response_model=ContentResponse)
 async def update_content(
     content_id: str,
     content: ContentUpdate,
@@ -71,7 +71,7 @@ async def update_content(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
-@router.delete("/content/{content_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/contents/{content_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_content(
     content_id: str,
     plugin: Optional[str] = Query(None, description="Plugin name to use"),
@@ -87,7 +87,7 @@ async def delete_content(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
-@router.get("/content", response_model=List[ContentResponse])
+@router.get("/contents", response_model=List[ContentResponse])
 async def list_content(
     plugin: Optional[str] = Query(None, description="Plugin name to use"),
     limit: int = Query(100, ge=1, le=1000),
